@@ -12,13 +12,20 @@ function getAuthRoutes() {
 
   router.post('/google-login', googleLogin);
   router.get('/me', protect, me);
+  router.get('/signout', signout);
 
   return router;
 }
 
 // All controllers/utility functions here
-async function googleLogin(req, res) {
+async function googleLogin(req, res, next) {
   const { username = '', email = '' } = req.body;
+  if (!username || !email) {
+    return next({
+      message: 'Please provide a username and an email to login',
+      status: 400,
+    });
+  }
   // check database for a user with this email
   let user = await prisma.user.findUnique({
     where: {
@@ -53,6 +60,9 @@ async function me(req, res) {
   res.status(200).json({ user: req.user });
 }
 
-function signout(req, res) {}
+function signout(req, res) {
+  res.clearCookie('token');
+  res.status(200).json({});
+}
 
 export { getAuthRoutes };
