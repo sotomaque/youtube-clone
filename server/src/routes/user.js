@@ -10,6 +10,7 @@ function getUserRoutes() {
 
   // GET RECOMMENDED CHANNELS
   router.get('/', protect, getRecommendedChannels);
+  // EDIT USER
   router.put('/', protect, editUser);
 
   // GET LIKED VIDEOS
@@ -431,7 +432,7 @@ async function getProfile(req, res, next) {
  * @param {*} res
  */
 async function editUser(req, res) {
-  const { username = '', cover = '', avatar = '', about = '' } = req.body;
+  const { username, cover, avatar, about } = req.body;
 
   const user = await prisma.user.update({
     where: {

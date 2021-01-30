@@ -17,7 +17,13 @@ function getAuthRoutes() {
   return router;
 }
 
-// All controllers/utility functions here
+/**
+ * LOGIN CONTROLLER
+ *
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ */
 async function googleLogin(req, res, next) {
   const { username = '', email = '' } = req.body;
   if (!username || !email) {
@@ -54,12 +60,61 @@ async function googleLogin(req, res, next) {
   res.status(200).send(token);
 }
 
-async function me(req, res) {
-  console.log(req.user);
-
-  res.status(200).json({ user: req.user });
+/**
+ * ME CONTROLLER
+ *  - returns an object with a user key that stores info
+ * about currently logged in user.
+ *
+ * i.e. response = {
+ *  user = {
+ *    id,
+ *    createdAt,
+ *    ...,
+ *    videos: [],
+ *    channels: []
+ *  }
+ * }
+ *
+ * @param {*} req
+ * @param {*} res
+ */
+async function me(req, res, next) {
+  // GUARD
+  if (!req.user) {
+    return next({
+      message: 'You need to be logged in to visit this route.',
+      statusCode: 401,
+    });
+  }
+  // GET CURRENT USER INFO
+  const subscriptions = await prisma.subscription.findMany({
+    where: {
+      subscriberId: {
+        equals: req.user.id,
+      },
+    },
+  });
+  const channelIds = subscriptions.map((sub) => sub.subscribedToId);
+  const channels = await prisma.user.findMany({
+    where: {
+      id: {
+        in: channelIds,
+      },
+    },
+  });
+  // SET ATTRIBUTE(S)
+  const user = req.user;
+  user.channels = channels;
+  // RESPOND
+  res.status(200).json({ user });
 }
 
+/**
+ * SIGN OUT CONTROLLER
+ *
+ * @param {*} req
+ * @param {*} res
+ */
 function signout(req, res) {
   res.clearCookie('token');
   res.status(200).json({});
