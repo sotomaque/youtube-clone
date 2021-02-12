@@ -131,7 +131,6 @@ async function searchVideos(req, res, next) {
 
 async function addVideo(req, res) {
   const { title, description, url, thumbnail } = req.body;
-
   const video = await prisma.video.create({
     data: {
       title,
