@@ -1,11 +1,32 @@
-import React from "react";
-import Wrapper from "../styles/Home";
-import VideoGrid from "../styles/VideoGrid";
+import ErrorMessage from 'components/ErrorMessage';
+import VideoCard from 'components/VideoCard';
+import React from 'react';
+import { useQuery } from 'react-query';
+import HomeSkeleton from 'skeletons/HomeSkeleton';
+import { client } from 'utils/api-client';
+import Wrapper from '../styles/Home';
+import VideoGrid from '../styles/VideoGrid';
 
 function Home() {
+  const {
+    data: videos,
+    isLoading,
+    isError,
+    error,
+    isSuccess,
+  } = useQuery('Home', () =>
+    client.get('/videos').then((res) => res.data.videos)
+  );
+  if (isLoading) return <HomeSkeleton />;
+  if (isError) return <ErrorMessage error={error} />;
+  console.log('videos', videos);
   return (
     <Wrapper>
-      <VideoGrid>Recommended videos</VideoGrid>
+      <VideoGrid>
+        {isSuccess
+          ? videos.map((video) => <VideoCard key={video.id} video={video} />)
+          : null}
+      </VideoGrid>
     </Wrapper>
   );
 }

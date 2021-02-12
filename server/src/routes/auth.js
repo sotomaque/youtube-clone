@@ -2,6 +2,9 @@ import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import { protect } from '../middleware/authorization';
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const prisma = new PrismaClient();
 
@@ -9,6 +12,8 @@ const prisma = new PrismaClient();
 // All route definitions are in one place and we only need to export one thing
 function getAuthRoutes() {
   const router = express.Router();
+
+  // everything here lies behing /api/v1/auth
 
   router.post('/google-login', googleLogin);
   router.get('/me', protect, me);
@@ -25,10 +30,16 @@ function getAuthRoutes() {
  * @param {*} next
  */
 async function googleLogin(req, res, next) {
-  const { username = '', email = '' } = req.body;
-  if (!username || !email) {
+  const { idToken } = req.body;
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const { name, picture, email } = ticket.getPayload();
+
+  if (!email) {
     return next({
-      message: 'Please provide a username and an email to login',
+      message: 'Please provide an email to login',
       status: 400,
     });
   }
@@ -42,8 +53,9 @@ async function googleLogin(req, res, next) {
   if (!user) {
     user = await prisma.user.create({
       data: {
-        username,
         email,
+        username: name,
+        avatar: picture,
       },
     });
   }

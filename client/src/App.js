@@ -22,9 +22,7 @@ import { useLocationChange } from 'hooks/use-location-change';
 
 function App() {
   const [isSidebarOpen, setSidebarOpen] = React.useState(false);
-  const toggleSidebar = () => {
-    setSidebarOpen((prev) => !prev);
-  };
+  const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
   // on location change -> close sidebar
   const handleCloseSidebar = () => setSidebarOpen(false);
